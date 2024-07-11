@@ -17,27 +17,28 @@ class TapAxeptio(Tap):
     # TODO: Update this section with the actual config values you expect:
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "auth_token",
+            "username",
+            th.StringType,
+            required=True,
+            description="Username",
+        ),
+        th.Property(
+            "password",
             th.StringType,
             required=True,
             secret=True,  # Flag config as protected.
-            description="The token to authenticate against the API service",
-        ),
-        th.Property(
-            "project_ids",
-            th.ArrayType(th.StringType),
-            required=True,
-            description="Project IDs to replicate",
+            description="Password",
         ),
         th.Property(
             "start_date",
-            th.DateTimeType,
+            th.DateType,
+            default="2022-07-01",
             description="The earliest record date to sync",
         ),
         th.Property(
             "api_url",
             th.StringType,
-            default="https://api.mysample.com",
+            default="https://api.axept.io",
             description="The url for the API service",
         ),
     ).to_dict()
@@ -49,8 +50,7 @@ class TapAxeptio(Tap):
             A list of discovered streams.
         """
         return [
-            streams.GroupsStream(self),
-            streams.UsersStream(self),
+            streams.AxeptioExportsStream(self),
         ]
 
 

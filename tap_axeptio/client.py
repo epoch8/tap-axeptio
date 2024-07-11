@@ -30,28 +30,43 @@ class AxeptioStream(RESTStream):
     """Axeptio stream class."""
 
     # Update this value if necessary or override `parse_response`.
-    records_jsonpath = "$[*]"
+    # records_jsonpath = "$[*]"
 
     # Update this value if necessary or override `get_new_paginator`.
-    next_page_token_jsonpath = "$.next_page"  # noqa: S105
+    # next_page_token_jsonpath = "$.next_page"  # noqa: S105
 
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
         # TODO: hardcode a value here, or retrieve it from self.config
-        return "https://api.mysample.com"
+        return self.config.get("api_url", "")
+
+    # @property
+    # def authenticator(self) -> HTTPBasicAuth:
+    #     """Return a new authenticator object.
+
+    #     Returns:
+    #         An authenticator instance.
+    #     """
+    #     return HTTPBasicAuth(
+    #         username=self.config.get("username", ""),
+    #         password=self.config.get("password", ""),
+    #     )
 
     @property
-    def authenticator(self) -> HTTPBasicAuth:
-        """Return a new authenticator object.
+    def authenticator_token(self) -> str:
 
-        Returns:
-            An authenticator instance.
-        """
-        return HTTPBasicAuth(
-            username=self.config.get("username", ""),
-            password=self.config.get("password", ""),
+        credentials = {
+            "username": self.config.get("username", ""),
+            "password": self.config.get("password", "")
+        }
+
+        response_auth = requests.post(
+            url=self.url_base+"/v1/auth/local/signin",
+            data=credentials
         )
+        
+        return response_auth.json().get("token")
 
     @property
     def http_headers(self) -> dict:
@@ -60,27 +75,27 @@ class AxeptioStream(RESTStream):
         Returns:
             A dictionary of HTTP headers.
         """
-        headers = {}
+        headers = {"Authorization": f"Bearer {self.authenticator_token}"}
         if "user_agent" in self.config:
             headers["User-Agent"] = self.config.get("user_agent")
         # If not using an authenticator, you may also provide inline auth headers:
         # headers["Private-Token"] = self.config.get("auth_token")  # noqa: ERA001
         return headers
 
-    def get_new_paginator(self) -> BaseAPIPaginator:
-        """Create a new pagination helper instance.
+    # def get_new_paginator(self) -> BaseAPIPaginator:
+    #     """Create a new pagination helper instance.
 
-        If the source API can make use of the `next_page_token_jsonpath`
-        attribute, or it contains a `X-Next-Page` header in the response
-        then you can remove this method.
+    #     If the source API can make use of the `next_page_token_jsonpath`
+    #     attribute, or it contains a `X-Next-Page` header in the response
+    #     then you can remove this method.
 
-        If you need custom pagination that uses page numbers, "next" links, or
-        other approaches, please read the guide: https://sdk.meltano.com/en/v0.25.0/guides/pagination-classes.html.
+    #     If you need custom pagination that uses page numbers, "next" links, or
+    #     other approaches, please read the guide: https://sdk.meltano.com/en/v0.25.0/guides/pagination-classes.html.
 
-        Returns:
-            A pagination helper instance.
-        """
-        return super().get_new_paginator()
+    #     Returns:
+    #         A pagination helper instance.
+    #     """
+    #     return super().get_new_paginator()
 
     def get_url_params(
         self,
