@@ -17,6 +17,7 @@ plugins:
     - stream-maps
     config:
       start_date: '2022-07-01'
+      backoff_max_tries: 50
     settings:
     # TODO: To configure using Meltano, declare settings and their types here:
     - name: username
@@ -25,6 +26,8 @@ plugins:
       sensitive: true
     - name: start_date
       value: '2022-07-01'
+    - name: backoff_max_tries
+      value: 5
   loaders:
   - name: target-jsonl
     variant: andyh1203

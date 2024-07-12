@@ -41,6 +41,12 @@ class TapAxeptio(Tap):
             default="https://api.axept.io",
             description="The url for the API service",
         ),
+        th.Property(
+            "backoff_max_tries",
+            th.IntegerType,
+            default=5,
+            description="The number of attempts before giving up when retrying requests",
+        ),
     ).to_dict()
 
     def discover_streams(self) -> list[streams.AxeptioStream]:
