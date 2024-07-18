@@ -55,7 +55,7 @@ class MyPaginator(BaseAPIPaginator):
             The next page token or index. Return `None` from this method to indicate
                 the end of pagination.
         """
-        next = pendulum.parser.parse(self._value).date().add(days=1)
+        next = pendulum.parser.parse(self._value).add(days=1)
         return f"{next}"
 
 
@@ -111,8 +111,8 @@ class AxeptioExportsStream(AxeptioStream):
         params: dict = {}
         
         if next_page_token:
-            params["start"] = f"{next_page_token}T00:00:00.000Z"
-            params["end"] = f"{next_page_token}T23:59:59.999Z"
+            params["start"] = next_page_token
+            params["end"] = f"{pendulum.parse(next_page_token).add(days=1)}"
 
         return params
     
@@ -133,10 +133,8 @@ class AxeptioExportsStream(AxeptioStream):
             An item for every record in the response.
         """
         if (replication_key_value := self.get_starting_replication_key_value(context=context)) is not None:
-            replication_key_value = pendulum.parse(replication_key_value).date()
-
             start_date = self.compare_start_date(
-                value=replication_key_value.strftime("%Y-%m-%d"),
+                value=replication_key_value,
                 start_date_value=self.config["start_date"]
             )
         

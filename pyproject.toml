@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tap-axeptio"
-version = "0.0.1"
+version = "0.0.2"
 description = "`tap-axeptio` is a Singer tap for Axeptio, built with the Meltano Singer SDK."
 readme = "README.md"
 authors = ["SergeyZ06 <SergeyZ06@yandex.ru>"]
