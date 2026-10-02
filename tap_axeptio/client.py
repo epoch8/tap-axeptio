@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 import requests
@@ -53,20 +54,44 @@ class AxeptioStream(RESTStream):
     #         password=self.config.get("password", ""),
     #     )
 
+    # Axeptio убрал выдачу токена по логину/паролю: POST {api_url}/v1/auth/local/signin
+    # отвечает 404 с июля 2026. Токен выдаёт отдельный хост login.axept.io по паре
+    # clientId/secret из личного кабинета Axeptio.
+    _access_token: str | None = None
+    _access_token_expires_at: float = 0.0
+
     @property
     def authenticator_token(self) -> str:
+        """Вернуть закэшированный bearer-токен, запросив новый когда истёк."""
+        if self._access_token and time.monotonic() < self._access_token_expires_at:
+            return self._access_token
 
-        credentials = {
-            "username": self.config.get("username", ""),
-            "password": self.config.get("password", "")
-        }
-
+        auth_url = self.config.get("auth_url", "https://login.axept.io")
         response_auth = requests.post(
-            url=self.url_base+"/v1/auth/local/signin",
-            data=credentials
+            url=auth_url + "/identity/resources/auth/v2/api-token",
+            json={
+                "clientId": self.config.get("client_id", ""),
+                "secret": self.config.get("secret_key", ""),
+            },
+            timeout=30,
         )
-        
-        return response_auth.json().get("token")
+        # Без этой проверки 404 от сервиса авторизации молча превращался
+        # в "Authorization: Bearer None" и отдавал 401 на выгрузке.
+        response_auth.raise_for_status()
+
+        payload = response_auth.json()
+        token = payload.get("access_token")
+        if not token:
+            msg = f"No access_token in auth response, got keys: {sorted(payload)}"
+            raise RuntimeError(msg)
+
+        # Дока обещает expires_in=3600, API отдаёт 86400 — поэтому доверяем
+        # ответу и держим минуту запаса, вместо того чтобы хардкодить любое из них.
+        ttl = int(payload.get("expires_in", 3600))
+        self._access_token = token
+        self._access_token_expires_at = time.monotonic() + max(ttl - 60, 60)
+
+        return token
 
     @property
     def http_headers(self) -> dict:

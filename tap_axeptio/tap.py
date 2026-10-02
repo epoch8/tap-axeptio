@@ -17,17 +17,36 @@ class TapAxeptio(Tap):
     # TODO: Update this section with the actual config values you expect:
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "username",
+            "client_id",
             th.StringType,
             required=True,
-            description="Username",
+            description="Client ID пары client-credentials из личного кабинета Axeptio",
+        ),
+        th.Property(
+            "secret_key",
+            th.StringType,
+            required=True,
+            secret=True,  # Flag config as protected.
+            description="Secret Key пары client-credentials из личного кабинета Axeptio",
+        ),
+        th.Property(
+            "auth_url",
+            th.StringType,
+            default="https://login.axept.io",
+            description="The url for the identity service issuing access tokens",
+        ),
+        th.Property(
+            "username",
+            th.StringType,
+            required=False,
+            description="Legacy, не используется: Axeptio убрал вход по логину/паролю",
         ),
         th.Property(
             "password",
             th.StringType,
-            required=True,
+            required=False,
             secret=True,  # Flag config as protected.
-            description="Password",
+            description="Legacy, не используется: Axeptio убрал вход по логину/паролю",
         ),
         th.Property(
             "start_date",
